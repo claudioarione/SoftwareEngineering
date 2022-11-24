@@ -1,5 +1,6 @@
 // TODO - ask if it's needed to speciffy DSO entity
-// TODO create entities to define power (or remove this concept) and replace secondsLeft with timestampEnd
+// TODO until now I have left the Int for power values, assuming that if a user has a fast-charging car he can be shown also suggestions related to
+// slow-charging sockets. Can the model be left as it is?
 
 sig UserId{}
 
@@ -44,7 +45,7 @@ sig CPO {
 }
 
 sig EnergyPrice {
-	// The definition of an Int field "price", although obvious, is omitted because not relevant for the model
+	// The declaration of an Int field "price", although natural, is omitted because not relevant for the model
 }
 sig STANDARD extends EnergyPrice {}
 sig DISCOUNT extends EnergyPrice {}
@@ -89,11 +90,13 @@ sig ChargingCar extends Car {
 	absorbedPower >= 0
 }
 
-sig Suggestion {
+abstract sig ChargingAction {
 	station: one ChargingStation,
 	user: one User,
 	timestamp: one Timestamp
 }
+sig Suggestion extends ChargingAction {}
+sig Prenotation extends ChargingAction {}
 
 // Facts
 fact erogatedPowerConstraint {
@@ -168,18 +171,32 @@ fact chargedCarDoesNotAbsorbePower {
 	all car: ChargingCar | (car.absorbedPower = 0) iff (car.batteryState = CHARGED)
 }
 
-fact suggestionPresentOnlyIfCarNeedsCharging {
-	// Every suggestion has to be related to a car that needs charging
-	all s: Suggestion | (s.user.car.batteryState = NEEDS_CHARGING)
+fact chargingActionPresentOnlyIfCarNeedsCharging {
+	// Every charging action is related to a car that needs charging
+	all action: ChargingAction | (action.user.car.batteryState = NEEDS_CHARGING)
 }
 
-fact eachSuggestionIsCoherentWithUserSchedule {
+fact chargingActionCoherentWithChargingType {
+	// Every charging action is related to a station which has a free socket
+	all action: ChargingAction | (some group: ChargingSocketsGroup |
+		(group in action.station.chargingSocketsGroups and group.secondsUntilFree = 0))
+}
+
+fact suggestionIsCoherentWithUserSchedule {
 	// Each suggestion is based on an appointment of the user or on a price reduction
 	all sugg: Suggestion | (some schedule: Schedule | schedule in sugg.user.schedules and
 		schedule.location = sugg.location and sugg.timestamp.value <= schedule.startingTime.value )
 		or
 		(some group: ChargingSocketsGroup | group in sugg.station.chargingSocketsGroups and
 			group.currentEnergyPrice = DISCOUNT)
+}
+
+fact noDuplicatePrenotationForSameUser {
+
+}
+
+fact noDuplicatePrenotationForSameSlot{
+
 }
 
 // TODO this assertion could be removed because redundant - behaviour already specified while defining "id" field
@@ -208,7 +225,8 @@ pred createSuggestionBasedOnDiscount {
 
 pred world  {
 	#User >= 3
-	#Schedule >= 5
+	#ChargingAction >= 5
+	some c: ChargingAction | c = Prenotation
 }
 
 run world for 7

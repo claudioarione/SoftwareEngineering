@@ -1,38 +1,24 @@
-// TODO - update Int into Double and ask if it's needed to speciffy DSO entity, replacing
-// "currentEnergyPrice" attribute with a more complex structure
+// TODO - ask if it's needed to speciffy DSO entity
+// TODO create entities to define power (or remove this concept) and replace secondsLeft with timestampEnd
 
-abstract sig ChargingSocketType {
-	secondsUntilFreed: one Int
-}
-one sig SLOW extends ChargingSocketType {}
-one sig RAPID extends ChargingSocketType {}
-one sig FAST extends ChargingSocketType {}
+sig UserId{}
 
 sig User  {
-	id: disj one Int,
-	name: one String,
-	surname: one String,
+	id: disj one UserId,
 	car: one Car,
 	schedules: set Schedule
-}  {
-	//  The id of every user is an 8-digit univoque number
-	id > 10000000
-	id < 100000000
 }
 
 // Car - related signatures
 sig Car {
-	name: one String,
 	batteryState: one BatteryState
 }
 
 sig BatteryState {
 	level: one ChargeLevel,
-	capacity: one ChargeLevel,
-	powerAbsorbed: one Int
+	capacity: one ChargeLevel
 } {
-	level.kWh < capacity.kWh
-	powerAbsorbed > 0
+	level.kWh <= capacity.kWh
 }
 
 sig ChargeLevel {
@@ -46,54 +32,188 @@ sig Schedule {
 	startingTime: one Timestamp,
 	endingTime: one Timestamp,
 	location: one Location
+} {
+	startingTime.value < endingTime.value
 }
 
 sig Timestamp {
-	// This value represents the "epoch time", 
+	// This value represents the "epoch time",
 	// i.e. the number of seconds since 1st January 1970, as done in practice by many systems
 	value: one Int
 } {
-	value > 1600000000
+	value > 0
 }
 
-sig Location {
-	latitude: one Int,
-	longitude: one Int
-} {
-	latitude > -90
-	latitude < 90
-	longitude > -180
-	longitude < 180
-}
+sig Location {}
 
-// CPO view 
+// CPO view
 sig CPO {
-	stations: set ChargingStation,
-	currentEnergyPrice: one EnergyPrice  // Expressed in €
+	stations: set ChargingStation
 }
 
 sig EnergyPrice {
-	basePrice: one Int,
-	discount: one Int
+	basePrice: one Price,
+	discount: one Price
 } {
-	basePrice > 0
-	discount >= 0
-	discount < basePrice
+	discount.value < basePrice.value
+}
+
+sig Price {
+	value: one Int
+} {
+	value >= 0
 }
 
 sig ChargingStation {
-	chargingSockets: some ChargingSocket
+	location: one Location,
+	chargingSocketsGroups: some ChargingSocketsGroup
+}
+
+// This sig is needed to model the availability of every tipe of charger present in the station
+sig ChargingSocketsGroup {
+	// FIXME: does every group in every station have a different price per kWh? In this case the entity CPO could be removed
+	sockets: set ChargingSocket,
+	currentEnergyPrice: one EnergyPrice,  // Expressed in €
+	secondsUntilFree: one Int
+} {
+	secondsUntilFree >= 0
 }
 
 sig ChargingSocket {
 	type: one ChargingSocketType,
-	costPerKWh: one Int,
 	attachedCar: lone ChargingCar
 }
 
+// We assume that the maximum power erogated by each socket type is standardized and doesn't depend on
+// the specific charging station
+abstract sig ChargingSocketType {
+	maxErogatedPower: one Int
+} {
+	maxErogatedPower > 0
+}
+one sig SLOW extends ChargingSocketType {}
+one sig RAPID extends ChargingSocketType {}
+one sig FAST extends ChargingSocketType {}
+
 sig ChargingCar extends Car {
 	// FIXME does powerAbsorbed have to go here or it can be left in Car?
+	absorbedPower: one Int,
 	secondsLeft: one Int
 } {
-	secondsLeft > 0
+	secondsLeft >= 0
+	absorbedPower >= 0
 }
+
+sig Suggestion {
+	station: one ChargingStation,
+	user: one User,
+	timestamp: one Timestamp
+}
+
+// Facts
+fact erogatedPowerConstraint {
+	FAST.maxErogatedPower > RAPID.maxErogatedPower and RAPID.maxErogatedPower > SLOW.maxErogatedPower
+}
+
+fact maxErogatedPowerSufficient {
+	all group: ChargingSocketsGroup | (all sock: ChargingSocket |
+		(sock in group.sockets) implies (sock.attachedCar.absorbedPower <= sock.type.maxErogatedPower)  )
+}
+
+fact everyGroupHasAUniqueStation {
+	all g: ChargingSocketsGroup | (one s: ChargingStation | g in s.chargingSocketsGroups)
+}
+
+fact everySocketHasAUniqueGroup {
+	all sock: ChargingSocket | (one group: ChargingSocketsGroup | sock in group.sockets)
+}
+
+fact noCarWithoutUser {
+	all c: Car | (one u: User | c = u.car)
+}
+
+fact noScheduleWithoutUser {
+	all s: Schedule | (one u: User | s in u.schedules)
+}
+
+fact noBatteryStateWithoutCar {
+	all state: BatteryState | (one c: Car | state = c.batteryState)
+}
+
+fact noChargeLevelWithoutBatteryState {
+	all l: ChargeLevel | (one state: BatteryState | ( l = state.capacity iff not ( l = state.level ) )  )
+}
+
+fact noEnergyPriceWithoutGroup {
+	all e: EnergyPrice | (one group: ChargingSocketsGroup | e = group.currentEnergyPrice)
+}
+
+fact noChargingStationWithoutCPO {
+	all s: ChargingStation | (one cpo: CPO | s  in cpo.stations)
+}
+
+fact allSocketsInGroupHaveSameType {
+	all group: ChargingSocketsGroup, socket1, socket2: ChargingSocket |
+		(socket1 in group.sockets and socket2 in group.sockets) implies socket1.type = socket2.type
+}
+
+fact noTwoGroupsWithSameChargingType {
+	no disjoint g1, g2: ChargingSocketsGroup | ( some disjoint s1, s2: ChargingSocket | (
+		s1 in g1.sockets and s2 in g2.sockets and s1.type = s2.type) )
+}
+
+fact noEmptyGroups {
+	all g: ChargingSocketsGroup | (some s: ChargingSocket | s in g.sockets)
+}
+
+fact timeUntilOneGroupSocketIsFreeIsCoherent {
+	// If there's a free socket then secondsUntilFreed = 0, otherwise "secondsUntilFree" is the minimum
+	// among all "secondsLeft" attributes of the charging cars
+	all group: ChargingSocketsGroup | (group.secondsUntilFree = 0 iff (
+		some socket: ChargingSocket | (socket in group.sockets and no c: ChargingCar | (c = socket.attachedCar) )))
+	and
+	all group: ChargingSocketsGroup, socket: ChargingSocket, car: ChargingCar |
+		(socket in group.sockets and car = socket.attachedCar) implies group.secondsUntilFree <= car.secondsLeft
+}
+
+fact ifCarIsChargedDoesNotAbsorbePower {
+	// If a car is fully charged it does not absorbe power
+	all car: ChargingCar | (car.absorbedPower = 0) iff (car.batteryState.level = car.batteryState.capacity)
+}
+
+fact eachSuggestionIsCoeherentWithUserSchedule {
+	// Each suggestion is based on an appointment of the user
+	all sugg: Suggestion | (some schedule: Schedule | schedule in sugg.user.schedules and
+		schedule.location = sugg.location and sugg.timestamp.value <= schedule.startingTime.value )
+}
+
+// TODO this assertion could be removed because redundant - behaviour already specified while defining "id" field
+assert noDuplicateIds {
+	no disjoint u1, u2: User | u1.id = u2.id
+}
+
+// TODO remember: every "sub-entity" (e.g. BatteryLevel) can't exist independently (i.e. without a BatteryState). Has this to be formalized? Otherwise
+// the world isn't realistic
+
+pred chargeCar [c, c1: Car, station: ChargingStation, chosenType: ChargingSocketType] {
+
+}
+
+pred createSuggestionBasedOnSchedule {
+
+}
+
+pred createSuggestionBasedOnDiscount {
+
+}
+
+// With many attributes the model is not so clear, how to fix?
+// What to do with Double?
+// Why do some simple constraints create problems?
+
+pred world  {
+	#User >= 3
+	#Schedule >= 5
+}
+
+run world for 7

@@ -14,18 +14,10 @@ sig Car {
 	batteryState: one BatteryState
 }
 
-sig BatteryState {
-	level: one ChargeLevel,
-	capacity: one ChargeLevel
-} {
-	level.kWh <= capacity.kWh
-}
-
-sig ChargeLevel {
-	kWh: one Int  // Represents the charge level expressed in kWh
-} {
-	kWh > 0
-}
+abstract sig BatteryState {}
+sig NEEDS_CHARGING extends BatteryState {}
+sig CHARGING extends BatteryState {}
+sig CHARGED extends BatteryState {}
 
 // Defines an appointment, composed of dates and location
 sig Schedule {
@@ -140,10 +132,6 @@ fact noBatteryStateWithoutCar {
 	all state: BatteryState | (one c: Car | state = c.batteryState)
 }
 
-fact noChargeLevelWithoutBatteryState {
-	all l: ChargeLevel | (one state: BatteryState | ( l = state.capacity iff not ( l = state.level ) )  )
-}
-
 fact noEnergyPriceWithoutGroup {
 	all e: EnergyPrice | (one group: ChargingSocketsGroup | e = group.currentEnergyPrice)
 }
@@ -176,9 +164,20 @@ fact timeUntilOneGroupSocketIsFreeIsCoherent {
 		(socket in group.sockets and car = socket.attachedCar) implies group.secondsUntilFree <= car.secondsLeft
 }
 
-fact ifCarIsChargedDoesNotAbsorbePower {
-	// If a car is fully charged it does not absorbe power
-	all car: ChargingCar | (car.absorbedPower = 0) iff (car.batteryState.level = car.batteryState.capacity)
+fact chargingCarHasCorrectType {
+	// If a car is being charged, its BatteryState must be CHARGING or CHARGED - it could happen that the recharge
+	// is finished but the car is still attached
+	all car: ChargingCar | car.batteryState = CHARGING or car.batteryState = CHARGED
+}
+
+fact chargedCarDoesNotAbsorbePower {
+	// If a car is fully charged it does not absorbe power from the socket
+	all car: ChargingCar | (car.absorbedPower = 0) iff (car.batteryState = CHARGED)
+}
+
+fact suggestionPresentOnlyIfCarNeedsCharging {
+	// Every suggestion has to be related to a car that needs charging
+	all s: Suggestion | (s.user.car.batteryState = NEEDS_CHARGING)
 }
 
 fact eachSuggestionIsCoeherentWithUserSchedule {

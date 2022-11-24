@@ -15,9 +15,9 @@ sig Car {
 }
 
 abstract sig BatteryState {}
-sig NEEDS_CHARGING extends BatteryState {}
-sig CHARGING extends BatteryState {}
-sig CHARGED extends BatteryState {}
+one sig NEEDS_CHARGING extends BatteryState {}
+one sig CHARGING extends BatteryState {}
+one sig CHARGED extends BatteryState {}
 
 // Defines an appointment, composed of dates and location
 sig Schedule {
@@ -44,17 +44,10 @@ sig CPO {
 }
 
 sig EnergyPrice {
-	basePrice: one Price,
-	discount: one Price
-} {
-	discount.value < basePrice.value
+	// The definition of an Int field "price", although obvious, is omitted because not relevant for the model
 }
-
-sig Price {
-	value: one Int
-} {
-	value >= 0
-}
+sig STANDARD extends EnergyPrice {}
+sig DISCOUNT extends EnergyPrice {}
 
 sig ChargingStation {
 	location: one Location,
@@ -180,10 +173,13 @@ fact suggestionPresentOnlyIfCarNeedsCharging {
 	all s: Suggestion | (s.user.car.batteryState = NEEDS_CHARGING)
 }
 
-fact eachSuggestionIsCoeherentWithUserSchedule {
-	// Each suggestion is based on an appointment of the user
+fact eachSuggestionIsCoherentWithUserSchedule {
+	// Each suggestion is based on an appointment of the user or on a price reduction
 	all sugg: Suggestion | (some schedule: Schedule | schedule in sugg.user.schedules and
 		schedule.location = sugg.location and sugg.timestamp.value <= schedule.startingTime.value )
+		or
+		(some group: ChargingSocketsGroup | group in sugg.station.chargingSocketsGroups and
+			group.currentEnergyPrice = DISCOUNT)
 }
 
 // TODO this assertion could be removed because redundant - behaviour already specified while defining "id" field

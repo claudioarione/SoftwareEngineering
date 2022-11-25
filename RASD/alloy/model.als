@@ -24,9 +24,9 @@ sig Car {
 }
 
 abstract sig BatteryState {}
-one sig NEEDS_CHARGING extends BatteryState {}
-one sig CHARGING extends BatteryState {}
-one sig CHARGED extends BatteryState {}
+lone sig NEEDS_CHARGING extends BatteryState {}
+lone sig CHARGING extends BatteryState {}
+lone sig CHARGED extends BatteryState {}
 
 sig Schedule {
 	startingTime: one Timestamp,
@@ -49,7 +49,7 @@ sig CPO {
 	stations: set ChargingStation
 }
 
-sig EnergyPrice {
+abstract sig EnergyPrice {
 	// The declaration of an Int field "price", although natural, is omitted because not relevant for the model
 }
 sig STANDARD extends EnergyPrice {}
@@ -84,9 +84,9 @@ abstract sig ChargingSocketType {
 } {
 	maxErogatedPower > 0
 }
-one sig SLOW extends ChargingSocketType {}
-one sig RAPID extends ChargingSocketType {}
-one sig FAST extends ChargingSocketType {}
+lone sig SLOW extends ChargingSocketType {}
+lone sig RAPID extends ChargingSocketType {}
+lone sig FAST extends ChargingSocketType {}
 
 abstract sig ChargingAction {
 	// We assume that a user can book a specific ChargingSocket
@@ -95,7 +95,7 @@ abstract sig ChargingAction {
 	validFrom: one Timestamp,
 	validUntil: one Timestamp
 } {
-	validFrom.value <= validUntil.value
+	validFrom.value < validUntil.value
 }
 sig Suggestion extends ChargingAction {}
 sig Prenotation extends ChargingAction {}
@@ -158,7 +158,7 @@ fact noScheduleWithoutUser {
 
 fact noBatteryStateWithoutCar {
 	// A BatteryState cannot exist if not associated to a Car
-	all state: BatteryState | (one c: Car | state = c.batteryState)
+	all state: BatteryState | (some c: Car | state = c.batteryState)
 }
 
 fact noEnergyPriceWithoutGroup {
@@ -217,29 +217,37 @@ fact carMustBeChargingOnASocket {
 
 fact chargingActionPresentOnlyIfCarNeedsCharging {
 	// Every charging action - a Prenotation or a Suggestion - is related to a car that needs charging
-	all action: ChargingAction | (action.user.car.batteryState = NEEDS_CHARGING)
+	all a: ChargingAction | a.user.car.batteryState = NEEDS_CHARGING
 }
 
 fact chargingActionOnlyIfSocketFree {
-	// The Prenotation or the Suggestion can be showed only if the proposed ChargingSocket is currently free and not booked
-	all action: ChargingAction | (action.socket.attachedCar = none and (
-		no p: Prenotation | p.socket = action.socket and p.validUntil.value > action.validFrom.value))
+	// The Prenotation or the Suggestion can be showed only if the proposed ChargingSocket is currently free
+	all a: ChargingAction | (a.socket.attachedCar = none)
+}
+
+fact noSuggestionsIfSocketBooked {
+	// The Suggestion can be showed only if the proposed ChargingSocket is not already booked
+	no s: Suggestion, p: Prenotation | (p.socket = s.socket and (p.validFrom.value <= s.validUntil.value))
+}
+
+fact noPrenotationsIfSocketBooked {
+	// The Prenotation can be showed only if the proposed ChargingSocket is not already booked
+	no disjoint p1, p2: Prenotation | (p1.socket = p2.socket)
+}
+
+fact noSuggestionsOrFurtherPrenotationsForSameUser {
+	// A user can't book a socket or receive suggestions in a time interval during which he has another active prenotation
+	no disjoint p1, p2: ChargingAction | (p1.user = p2.user)
 }
 
 fact suggestionIsCoherentWithUserSchedule {
 	// Each suggestion is based on an appointment of the user or on a price reduction
-	all sugg: Suggestion | (some schedule: Schedule | schedule in sugg.user.schedules and
+	all sugg: Suggestion | ((some schedule: Schedule | schedule in sugg.user.schedules and
 		schedule.location = sugg.location and sugg.validFrom.value <= schedule.startingTime.value )
 		or
 		(one group: ChargingSocketsGroup | sugg.socket in group.sockets and
-			group.currentEnergyPrice = DISCOUNT)
+			group.currentEnergyPrice = DISCOUNT))
 }
-
-fact noDuplicatePrenotationForSameUser {
-	// A user can't book a socket in a time interval during which he has another active prenotation
-	no disjoint p1, p2: Prenotation | (p1.user = p2.user and (p1.validFrom.value >= p2.validUntil.value or p2.validFrom.value >= p1.validUntil.value))
-}
-
 
 ------------------------------------------------------------------------ASSERTIONS----------------------------------------------------------------------------
 
@@ -248,7 +256,7 @@ assert correctNumberOfChargingGroups {
 	all s: ChargingStation | #s.chargingSocketsGroups <= #ChargingSocketType
 }
 
-check correctNumberOfChargingGroups for 5
+//check correctNumberOfChargingGroups for 5
 
 assert carIsCharging {
 	// Assert that when a car is in charging state all the related attributes have to be coherent
@@ -257,13 +265,13 @@ assert carIsCharging {
 			s.attachedCar = c and s.type.maxErogatedPower >= c.absorbedPower))
 }
 
-check carIsCharging for 5
+//check carIsCharging for 5
 
 assert grantPrenotationAndSuggestionsToNonChargingCars {
 	no c: Car | c.batteryState = CHARGING and (some action: ChargingAction | action.user.car = c)
 }
 
-check grantPrenotationAndSuggestionsToNonChargingCars for 5
+//check grantPrenotationAndSuggestionsToNonChargingCars for 5
 
 assert giveSuggestionsBasedOnPriceOrLocation {
 	// There are no suggestions for a non-discount price in a Location where the user doesn't have an appointment in
@@ -271,4 +279,20 @@ assert giveSuggestionsBasedOnPriceOrLocation {
 		(no sch: Schedule | sch in s.user.schedules and sch.location = s.location)
 }
 
-check giveSuggestionsBasedOnPriceOrLocation for 5
+//check giveSuggestionsBasedOnPriceOrLocation for 5
+
+
+-----------------------------------------------------------------------PREDICATES----------------------------------------------------------------------------
+
+-- The figure is projected over eight sigs, in order to focuse more on the actual interations between the entities
+-- Simulation that shows how prenotations and suggestions can combine together: in detail
+pred userWorld  {
+	#User >= 3
+	#Suggestion > 1
+	#Prenotation > 1
+	#ChargingSocket <= 2
+	all u: User | (some c: ChargingAction | c.user = u)
+	some u: User | (no p: Prenotation | p.user = u)
+}
+
+run userWorld for 4

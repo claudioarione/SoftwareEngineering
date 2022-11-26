@@ -2,7 +2,7 @@
 // TODO until now I have left the Int for power values, assuming that if a user has a fast-charging car he can be shown also suggestions related to
 // slow-charging sockets. Can the model be left as it is?
 
-// TODO move secondsLeft in ChargingSocket and away from Car
+// TODO move secondsLeft in ChargingSocket and away from Car and rename Schedule entity
 
 --------------------------------------------------------------------------SIGNATURES----------------------------------------------------------------------------
 
@@ -242,21 +242,24 @@ fact noFurtherPrenotationsForSameUser {
 }
 
 fact noDuplicateSuggestions {
+	// There can't be two suggestions for the same user and socket in a colliding time interval
 	no disjoint s1, s2: Suggestion | (s1.socket = s2.socket and s1.user = s2.user and
 		(s1.validFrom.value = s2.validFrom.value or s1.validUntil.value = s2.validUntil.value))
 }
 
 fact noSuggestionIfUserHasPrenotation {
+	// No suggestions are showed to users which already have a prenotation
 	no p: Prenotation, s: Suggestion | p.user = s.user
 }
 
 fact suggestionIsCoherentWithUserSchedule {
 	// Each suggestion is based on an appointment of the user or on a price reduction
-	all sugg: Suggestion | ((some schedule: Schedule | schedule in sugg.user.schedules and
-		schedule.location = sugg.location and sugg.validFrom.value <= schedule.startingTime.value )
+	all sugg: Suggestion | (some schedule: Schedule | schedule in sugg.user.schedules and sugg.validFrom.value <= schedule.startingTime.value and
+		(one station: ChargingStation, group: ChargingSocketsGroup | group in station.chargingSocketsGroups and sugg.socket in group.sockets and
+		station.location = schedule.location) )
 		or
 		(one group: ChargingSocketsGroup | sugg.socket in group.sockets and
-			group.currentEnergyPrice = DISCOUNT))
+			group.currentEnergyPrice = DISCOUNT)
 }
 
 ------------------------------------------------------------------------ASSERTIONS----------------------------------------------------------------------------
@@ -305,7 +308,29 @@ pred usersAndCarsWorld {
 	some c: Car | c.batteryState = CHARGING
 }
 
-run usersAndCarsWorld for 4
+//run usersAndCarsWorld for 4
+
+-- The instance reported in the picture hides many relations in order to focus only on the aspects described below
+-- All the three suggestions are for the same user. Suggestion2 is based on the entity Schedule associated to the user: in fact,
+-- the proposed socket (ChargingSocket0) belongs to a station which is in the same location as the one the user saved in his/her
+-- schedule and both the schedule and the suggestion are in the time interval 1-4.
+-- Suggestion0 and Suggestion1 are two suggestions on the same socket (ChargingSocket1) but regarding different time intervals. They are
+-- valid suggestions because the charging group the two sockets belong to offers a discount on the energy price
+pred suggestionsWorld {
+	#Suggestion = 3
+	#Schedule = 1
+	#User = 1
+	#ChargingSocket < #Suggestion
+	#Prenotation = 0
+	one c: ChargingSocketsGroup | c.currentEnergyPrice = DISCOUNT
+	one s: Suggestion | (one c: ChargingSocketsGroup | c.currentEnergyPrice = STANDARD and s.socket in c.sockets )
+	//some s: Suggestion | (one schedule: Schedule, c: ChargingStation, g: ChargingSocketsGroup |
+		//g in c.chargingSocketsGroups and s.socket in g.sockets and schedule.location = s.location)
+	//all sugg: Suggestion | (some schedule: Schedule | schedule in sugg.user.schedules and
+		//schedule.location = sugg.location and sugg.validFrom.value <= schedule.startingTime.value )
+}
+
+run suggestionsWorld for 4
 
 -- The instance is projected over ten sigs, in order to focuse more on the actual interations between the entities
 -- Simulation that shows how prenotations and suggestions can combine together

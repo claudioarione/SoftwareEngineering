@@ -117,7 +117,8 @@ fact onlyChargingCarsAbsorbePower {
 fact maxErogatedPowerSufficient {
 	// The amount of power absorbed by a car cannot exceed the power erogated by the socket it's connected to
 	all group: ChargingSocketsGroup | (all sock: ChargingSocket |
-		(sock in group.sockets) implies (sock.attachedCar.absorbedPower <= sock.type.maxErogatedPower)  )
+		(sock in group.sockets) implies (sock.attachedCar.absorbedPower <= sock.type.maxErogatedPower)) and
+		(some sock: ChargingSocket | (sock in group.sockets) implies (sock.attachedCar.absorbedPower = sock.type.maxErogatedPower))
 }
 
 
@@ -235,9 +236,18 @@ fact noPrenotationsIfSocketBooked {
 	no disjoint p1, p2: Prenotation | (p1.socket = p2.socket)
 }
 
-fact noSuggestionsOrFurtherPrenotationsForSameUser {
-	// A user can't book a socket or receive suggestions in a time interval during which he has another active prenotation
-	no disjoint p1, p2: ChargingAction | (p1.user = p2.user)
+fact noFurtherPrenotationsForSameUser {
+	// A user can't book a socket in a time interval during which he has another active prenotation
+	no disjoint p1, p2: Prenotation | (p1.user = p2.user)
+}
+
+fact noDuplicateSuggestions {
+	no disjoint s1, s2: Suggestion | (s1.socket = s2.socket and s1.user = s2.user and
+		(s1.validFrom.value = s2.validFrom.value or s1.validUntil.value = s2.validUntil.value))
+}
+
+fact noSuggestionIfUserHasPrenotation {
+	no p: Prenotation, s: Suggestion | p.user = s.user
 }
 
 fact suggestionIsCoherentWithUserSchedule {
@@ -284,15 +294,32 @@ assert giveSuggestionsBasedOnPriceOrLocation {
 
 -----------------------------------------------------------------------PREDICATES----------------------------------------------------------------------------
 
--- The figure is projected over eight sigs, in order to focuse more on the actual interations between the entities
--- Simulation that shows how prenotations and suggestions can combine together: in detail
-pred userWorld  {
-	#User >= 3
+-- This generated instance reported in the picture shows a CPO with one station which has two sockets, one with fast charge and the other
+-- one with rapid charge. The former is charging Car1, owned by User0. Car0 doesn't need to be attached to a socket because its battery is charged.
+-- We can observe that the number of seconds left until the car is charged is equal to the number of seconds until a fast-charging socket is free and
+-- that the power absorbed by the car is less than the maximum power available in the socket, as expected
+pred usersAndCarsWorld {
+	#Car >= 2
+	#CPO = 1
+	#ChargingSocketsGroup >= 2
+	some c: Car | c.batteryState = CHARGING
+}
+
+run usersAndCarsWorld for 4
+
+-- The instance is projected over ten sigs, in order to focuse more on the actual interations between the entities
+-- Simulation that shows how prenotations and suggestions can combine together
+-- As expected, the users which have an active prenotation (i.e. User0 and User1) don't receive suggestions, while
+-- User2, which has no prenotations. can receive more than one suggestion.
+-- There are a prenotation and a suggestion for each charging socket, but the two don't collide - in particular,
+-- the prenotations are from timestamp 3 to timestamp 5, while the suggestions are from 1 to 2, therefore compatible
+-- with the desidered modelization of the system
+pred prenotationsAndSuggestionsWorld  {
+	#User <= 3
 	#Suggestion > 1
 	#Prenotation > 1
 	#ChargingSocket <= 2
 	all u: User | (some c: ChargingAction | c.user = u)
-	some u: User | (no p: Prenotation | p.user = u)
 }
 
-run userWorld for 4
+run prenotationsAndSuggestionsWorld for 4

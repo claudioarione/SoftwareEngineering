@@ -1,0 +1,235 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Academic Title Page
+% LaTeX Template
+% Version 2.0 (17/7/17)
+%
+% This template was downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% Original author:
+% WikiBooks (LaTeX - Title Creation) with modifications by:
+% Vel (vel@latextemplates.com)
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+% 
+% Instructions for using this template:
+% This title page is capable of being compiled as is. This is not useful for 
+% including it in another document. To do this, you have two options: 
+%
+% 1) Copy/paste everything between \begin{document} and \end{document} 
+% starting at \begin{titlepage} and paste this into another LaTeX file where you 
+% want your title page.
+% OR
+% 2) Remove everything outside the \begin{titlepage} and \end{titlepage}, rename
+% this file and move it to the same directory as the LaTeX file you wish to add it to. 
+% Then add \input{./<new filename>.tex} to your LaTeX file where you want your
+% title page.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc} % Required for inputting international characters
+\usepackage[T1]{fontenc} % Output font encoding for international characters
+
+\usepackage{mathpazo} % Palatino font
+
+\usepackage{array}
+
+\begin{document}
+
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+
+\begin{titlepage} % Suppresses displaying the page number on the title page and the subsequent page counts as page 1
+	\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for horizontal lines, change thickness here
+	
+	\center % Centre everything on the page
+	
+	%------------------------------------------------
+	%	Headings
+	%------------------------------------------------
+	
+	\textsc{\LARGE Politecnico di Milano}\\[1.5cm] % Main heading such as the name of your university/college
+	
+	\textsc{\Large Software Engineering 2 - A.Y. 2022-23}\\[0.5cm] % Major heading such as course name
+	
+	\textsc{\large Prof. Elisabetta Di Nitto}\\[0.5cm] % Minor heading such as course title
+	
+	%------------------------------------------------
+	%	Title
+	%------------------------------------------------
+	
+	\HRule\\[0.6cm]
+	
+	{\huge\bfseries eMall – e-Mobility for All}\\[0.4cm]
+    
+	
+	\HRule\\[0.4cm]
+	{\Large\bfseries Requirements Analysis and Specification Document (RASD)}\\[1.2cm]
+	%------------------------------------------------
+	%	Author(s)
+	%------------------------------------------------
+	
+	\begin{minipage}{0.4\textwidth}
+		\begin{flushleft}
+			\large
+			\textit{Authors}\\
+            Claudio \textsc{Arione} \\
+            Riccardo \textsc{Begliomini} \\
+			Niccolò \textsc{Bindi}
+		\end{flushleft}
+	\end{minipage}
+	~
+	\begin{minipage}{0.4\textwidth}
+		\begin{flushright}
+			
+		\end{flushright}
+	\end{minipage}
+	
+	% If you don't want a supervisor, uncomment the two lines below and comment the code above
+	%{\large\textit{Author}}\\
+	%John \textsc{Smith} % Your name
+	
+	%------------------------------------------------
+	%	Date
+	%------------------------------------------------
+	
+	\vfill\vfill\vfill % Position the date 3/4 down the remaining page
+	    
+    \large Version: 0.1
+    \\
+	{\large\today} % Date, change the \today to a set date if you want to be precise
+	
+	%------------------------------------------------
+	%	Logo
+	%------------------------------------------------
+	
+	%\vfill\vfill
+	%\includegraphics[width=0.2\textwidth]{placeholder.jpg}\\[1cm] % Include a department/university logo - this will require the graphicx package
+	 
+	%----------------------------------------------------------------------------------------
+	
+	\vfill % Push the date up 1/4 of the remaining page
+	
+\end{titlepage}
+
+\section{Introduction}
+The unique challenges posed by climate change have recently led to a growing push in the adoption of new technologies to reduce carbon emissions. In particular, road transportation accounted for more than 70\% of the total transport emissions in the EU, which in turn was responsible for about a quarter of the EU’s total CO2 emissions in 2019 (source: shorturl.at/anryE).
+\\\\
+Electric vehicles represent a viable solution to tackle this problem, but they require specific infrastructure and knowledge about availability of chargers, cost of energy and distribution.
+\\\\
+eMall, a new startup based in Italy, is aiming at improving the experience of charging an electric vehicle. Their new app will be able to take care of every aspect of charging, by displaying the location and properties of charging stations nearby and making smart suggestions that take into consideration both economic and logistical factors.
+
+\subsection{Purpose}
+The system should provide the user with information about every charging point location nearby. Each location should present the characteristics of its charging stalls: cost, availability, charging speed, compatibility with the charging port, special offers.
+\\\\
+The user through the system should also be able to book a charge at a specific location for a certain timeframe, selecting through the GUI a charging station and inserting a starting time and ending time (to be able to create a real schedule, as to give the other users the possibility to book a consecutive timeframe if they’re willing to).
+\\\\
+The system should also allow the user to manage the whole charging process: they should be able to start the charging, to monitor its status and to be notified when it is done or when the booked timeframe has finished and make the user pay for the service.
+\\\\
+Additionally, the system should provide some smart suggestions to the users, based on their location, their schedule (by having access their calendar), the current offers, the battery status of the vehicle and the availability of charging stations.
+
+\subsubsection{Goals}
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|m{0.9cm}|m{10.5cm}|}
+    \hline
+      \bfseries Goal & \bfseries Description\\
+      \hline
+      \centering G1 & Provide the user the information about the nearby Charging Points (including their cost and the special offers they provide)\\ 
+      \hline
+      \centering G2 & Make the user able to book a specific Charging Point in a specific timeframe\\
+      \hline
+      \centering G3 & Make the user able to start and monitor the charging process, from the start to the end\\
+      \hline
+      \centering G4 & Notify the user when the charging process is finishes or when the booked timeframe expires\\
+      \hline
+      \centering G5 & Make the user able to pay for the charging service\\
+      \hline
+      \centering G6 & Provide the user with smart suggestions about the charging port to go charge to, based on their location, schedule, prices and special offers (if available)\\
+      \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Scope}
+The system should interact with the end user, so the UI should be easy to use in order to be accessible to a widest range of people possible, as electric cars are spreading rapidly and such a system could further amplify this phenomenon. It should also communicate in the backend with CPOs (Charging Point Operators), through their CPMSs, which are entities that own and manage charging stations; the system interacts with more than one CPO to broaden the offer to the end user.
+\\\\
+Each CPO, as stated previously, has its own CPMS (Charging Point Management System) which manages their physical infrastructure. For instance, it monitors the status of every socket and regulates the flow of energy to each of them while a vehicle is charging.
+\\\\
+Furthermore, the CPMS is responsible for choosing the best DSO (Distribution System Operator) to retrieve energy from, based on the current price and the mix of energy sources used to produce power. With this information, the CPO can decide and set the prices per unit of energy and also create special offers for end users.
+\\\\\\
+Additionally, CPMSs are tasked with managing energy storage (if present) of a certain charging station: if supplied with physical batteries, they can opt not to buy energy from DSOs and instead use the one stored in the batteries, otherwise energy can be purchased from the DSOs and partially used to recharge them. These decisions can be both made automatically or with input from a human operator.
+\\\\
+Each of the entities previously mentioned (the system, CPOs and DSOs) can communicate through specific APIs. The system can communicate with one or more CPMSs, each owned by a different CPO, retrieving the external status of a charging station (location, number of charging sockets available, speed of every socket, cost, estimated time left until a socket is freed).
+
+\subsubsection{World Phenomena}
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|m{0.9cm}|m{10.5cm}|}
+      \hline
+      \bfseries ID & \bfseries Description\\
+      \hline
+      \centering WP1 & The user wants to charge their vehicle\\
+      \hline
+      \centering WP2 & The user books a certain charging station in a certain timeframe\\
+      \hline
+      \centering WP3 & The user goes to the selected charging station\\
+      \hline
+      \centering WP4 & The CPMS of the CPO acquires energy from a DSO, based on the prices the latter offers and the mix of sources it acquires the energy from\\
+      \hline
+      \centering WP5 & The CPMS of the CPO distributes the energy to the different connected vehicles\\
+      \hline
+      \centering WP6 & The CPMS of a CPO decides the prices for a specific charging point based on the prices it acquired it from a DSO\\
+      \hline
+      \centering WP7 & The CPO decides whether to store energy in the batteries of a charging point (if any)\\
+      \hline
+      \centering WP8 & The CPO decides whether to use the energy stored in the batteries of a charging port (if they are available) or to use the one directly purchased from a DSO or a mix of both\\
+      \hline
+    \end{tabular}
+\end{table}
+\subsubsection{Shared Phenomena}
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|m{0.9cm}|m{10.5cm}|}
+    \hline
+      \bfseries ID & \bfseries Description\\
+      \hline
+      \centering SP1 & The user selects a charging port to go charge to\\
+      \hline
+      \centering SP2 & The user starts the charging process\\
+      \hline
+      \centering SP3 & The user monitors their charging process\\
+      \hline
+      \centering SP4 & The user gets notified about the ending of their charging process\\
+      \hline
+      \centering SP5 & The user pays for the charge\\
+      \hline
+      \centering SP6 & The eMSP retrieves the information about the external status of a charging station from the CPMS of the CPO which manages it (this includes the number of charging sockets
+      available, their type, their cost, and, if all sockets of a certain type are occupied, the estimated amount of time until the first socket of that type is freed)\\
+      \hline
+      \centering SP7 & The eMSP retrieves the information about the internal status of a charging station from the CPMS of the CPO which manages it (this includes the amount of energy available in its batteries, if any, number of vehicles being charged and, for each charging vehicle, amount of power absorbed and time left to the end of the charge)\\
+      \hline
+      \centering SP8 & The eMSP actually starts and monitors the charging process accordingly to the request of a user through an API provided by the CPMS of the CPO managing a certain charging station\\
+      \hline
+      \centering SP9 & The eMSP retrieves the information about current energy cost from the CPMS of the CPO which manages a certain charging station\\
+      \hline
+      \centering SP10 & The eMSP provides the user with smart suggestions about the best charging stations to go charge to (based on their location, schedule and status of charging stations nearby)\\
+      \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Definitions, Acronyms, Abbreviations}
+\begin{enumerate}
+    \item{\textbf{eMall – e-Mobility for All}\\The system we are analyzing and specifying in this document}
+    
+\end{enumerate}
+
+
+\end{document}

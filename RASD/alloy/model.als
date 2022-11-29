@@ -1,6 +1,8 @@
-// TODO - ask if it's needed to specify DSO entity
+// TODO - ask if it's needed to speciffy DSO entity
+// TODO until now I have left the Int for power values, assuming that if a user has a fast-charging vehicle he can be shown also suggestions related to
+// slow-charging sockets. Can the model be left as it is?
 
-// TODO move secondsLeft in ChargingSocket and away from Vehicle
+// TODO move secondsLeft in ChargingSocket and away from Vehicle and rename Schedule entity
 
 --------------------------------------------------------------------------SIGNATURES----------------------------------------------------------------------------
 
@@ -130,6 +132,9 @@ fact timeUntilOneGroupSocketIsFreeIsCoherent {
 	and
 	all group: ChargingSocketsGroup, socket: ChargingSocket, v: Vehicle |
 		(socket in group.sockets and v = socket.attachedVehicle) implies group.secondsUntilFree <= v.chargeSecondsLeft
+	and
+	some group: ChargingSocketsGroup, socket: ChargingSocket, v: Vehicle |
+		socket in group.sockets and v = socket.attachedVehicle and group.secondsUntilFree = v.chargeSecondsLeft
 }
 
 
@@ -235,7 +240,7 @@ fact noReservationsIfSocketBooked {
 }
 
 fact noFurtherReservationsForSameUser {
-	// A user can't book a socket in a time interval during which he has another active reservations
+	// A user can't book a socket in a time interval during which he has another active reservation
 	no disjoint r1, r2: Reservation | (r1.user = r2.user)
 }
 
@@ -246,7 +251,7 @@ fact noDuplicateSuggestions {
 }
 
 fact noSuggestionIfUserHasReservation {
-	// No suggestions are showed to users which already have a reservations
+	// No suggestions are showed to users which already have a reservation
 	no r: Reservation, s: Suggestion | r.user = s.user
 }
 
@@ -297,9 +302,9 @@ check giveSuggestionsBasedOnPriceOrLocation for 5
 -----------------------------------------------------------------------PREDICATES----------------------------------------------------------------------------
 
 -- This generated instance reported in the picture shows a CPO with one station which has two sockets, one with fast charge and the other
--- one with rapid charge. The former is charging Vehicle1, owned by User0. Vehicle0 doesn't need to be attached to a socket because its battery is charged.
--- We can observe that the number of seconds left until the vehicle is charged is equal to the number of seconds until a fast-charging socket is free and
--- that the power absorbed by the vehicle is less than the maximum power available in the socket, as expected
+-- one with rapid charge. The former (ChargingSocket1) is charging Vehicle1, owned by User1. Vehicle0 doesn't need to be attached to a socket because its battery is charged.
+-- We can observe that the number of seconds left until the vehicle is charged is equal to the number of seconds until a fast-charging socket is free (4) and
+-- that the power absorbed by the vehicle (1) is less than the maximum power available in the socket (2), as expected
 pred usersAndVehiclesWorld {
 	#Vehicle >= 2
 	#CPO = 1
@@ -311,10 +316,10 @@ run usersAndVehiclesWorld for 4
 
 -- The instance reported in the picture hides many relations in order to focus only on the aspects described below
 -- All the three suggestions are for the same user. Suggestion2 is based on the entity Appointment associated to the user: in fact,
--- the proposed socket (ChargingSocket0) belongs to a station which is in the same location as the one the user saved in his/her
--- schedule and both the schedule and the suggestion are in the time interval 1-4.
--- Suggestion0 and Suggestion1 are two suggestions on the same socket (ChargingSocket1) but regarding different time intervals. They are
--- valid suggestions because the charging group the two sockets belong to offers a discount on the energy price
+-- the proposed socket (ChargingSocket1) belongs to a station which is in the same location as the one the user saved in his/her
+-- schedule and both the schedule and the suggestion are in the time interval 1-2.
+-- Suggestion1 and Suggestion2 are two suggestions on the same socket (ChargingSocket0) but regarding different time intervals. They are
+-- valid suggestions because the charging group the socket belongs to (ChargingSocketsGroup1) offers a discount on the energy price
 pred suggestionsWorld {
 	#Suggestion = 3
 	#Appointment = 1
@@ -327,15 +332,14 @@ pred suggestionsWorld {
 
 run suggestionsWorld for 4
 
--- The instance is projected over ten sigs, in order to focuse more on the actual interations between the entities
 -- Simulation that shows how reservations and suggestions can combine together
+-- The instance is projected over ten sigs and many relations (including all temporal ones), in order to focus
+-- more on the actual interactions between the entities
 -- As expected, the users which have an active reservation (i.e. User0 and User1) don't receive suggestions, while
--- User2, which has no reservations. can receive more than one suggestion.
--- There are a reservation and a suggestion for each charging socket, but the two don't collide - in particular,
--- the reservations are from timestamp 3 to timestamp 5, while the suggestions are from 1 to 2, therefore compatible
--- with the desired modelization of the system
+-- User2, which has no reservations, can receive more than one suggestion.
+-- There are a reservation and a suggestion for each charging socket, but the two don't collide because they consider different sockets
 pred reservationsAndSuggestionsWorld  {
-	#User <= 3
+	#User = 3
 	#Suggestion > 1
 	#Reservation > 1
 	#ChargingSocket <= 2

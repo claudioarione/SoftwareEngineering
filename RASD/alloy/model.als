@@ -98,7 +98,7 @@ abstract sig ChargingAction {
 	validFrom.value < validUntil.value
 }
 sig Suggestion extends ChargingAction {}
-sig Prenotation extends ChargingAction {}
+sig Reservation extends ChargingAction {}
 
 ---------------------------------------------------------------------------FACTS----------------------------------------------------------------------------
 
@@ -214,31 +214,31 @@ fact carMustBeChargingOnASocket {
 }
 
 
--- Facts related to ChargingAction entities - i.e. Prenotation and Suggestion entities
+-- Facts related to ChargingAction entities - i.e. Reservation and Suggestion entities
 
 fact chargingActionPresentOnlyIfCarNeedsCharging {
-	// Every charging action - a Prenotation or a Suggestion - is related to a car that needs charging
+	// Every charging action - a Reservation or a Suggestion - is related to a car that needs charging
 	all a: ChargingAction | a.user.car.batteryState = NEEDS_CHARGING
 }
 
 fact chargingActionOnlyIfSocketFree {
-	// The Prenotation or the Suggestion can be showed only if the proposed ChargingSocket is currently free
+	// The Reservation or the Suggestion can be showed only if the proposed ChargingSocket is currently free
 	all a: ChargingAction | (a.socket.attachedCar = none)
 }
 
 fact noSuggestionsIfSocketBooked {
 	// The Suggestion can be showed only if the proposed ChargingSocket is not already booked
-	no s: Suggestion, p: Prenotation | (p.socket = s.socket and (p.validFrom.value <= s.validUntil.value))
+	no s: Suggestion, r: Reservation | (r.socket = s.socket and (r.validFrom.value <= s.validUntil.value))
 }
 
-fact noPrenotationsIfSocketBooked {
-	// The Prenotation can be showed only if the proposed ChargingSocket is not already booked
-	no disjoint p1, p2: Prenotation | (p1.socket = p2.socket)
+fact noReservationsIfSocketBooked {
+	// The Reservation can be showed only if the proposed ChargingSocket is not already booked
+	no disjoint r1, r2: Reservation | (r1.socket = r2.socket)
 }
 
-fact noFurtherPrenotationsForSameUser {
+fact noFurtherReservationsForSameUser {
 	// A user can't book a socket in a time interval during which he has another active prenotation
-	no disjoint p1, p2: Prenotation | (p1.user = p2.user)
+	no disjoint r1, r2: Reservation | (r1.user = r2.user)
 }
 
 fact noDuplicateSuggestions {
@@ -247,9 +247,9 @@ fact noDuplicateSuggestions {
 		(s1.validFrom.value = s2.validFrom.value or s1.validUntil.value = s2.validUntil.value))
 }
 
-fact noSuggestionIfUserHasPrenotation {
+fact noSuggestionIfUserHasReservation {
 	// No suggestions are showed to users which already have a prenotation
-	no p: Prenotation, s: Suggestion | p.user = s.user
+	no r: Reservation, s: Suggestion | r.user = s.user
 }
 
 fact suggestionIsCoherentWithUserAppointment {
@@ -280,11 +280,11 @@ assert carIsCharging {
 
 //check carIsCharging for 5
 
-assert grantPrenotationAndSuggestionsToNonChargingCars {
+assert grantReservationAndSuggestionsToNonChargingCars {
 	no c: Car | c.batteryState = CHARGING and (some action: ChargingAction | action.user.car = c)
 }
 
-//check grantPrenotationAndSuggestionsToNonChargingCars for 5
+//check grantReservationAndSuggestionsToNonChargingCars for 5
 
 assert giveSuggestionsBasedOnPriceOrLocation {
 	// There are no suggestions for a non-discount price in a Location where the user doesn't have an appointment in
@@ -322,7 +322,7 @@ pred suggestionsWorld {
 	#Appointment = 1
 	#User = 1
 	#ChargingSocket < #Suggestion
-	#Prenotation = 0
+	#Reservation = 0
 	one c: ChargingSocketsGroup | c.currentEnergyPrice = DISCOUNT
 	one s: Suggestion | (one c: ChargingSocketsGroup | c.currentEnergyPrice = STANDARD and s.socket in c.sockets )
 }
@@ -339,7 +339,7 @@ pred suggestionsWorld {
 pred prenotationsAndSuggestionsWorld  {
 	#User <= 3
 	#Suggestion > 1
-	#Prenotation > 1
+	#Reservation > 1
 	#ChargingSocket <= 2
 	all u: User | (some c: ChargingAction | c.user = u)
 }

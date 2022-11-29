@@ -1,8 +1,6 @@
 // TODO - ask if it's needed to speciffy DSO entity
-// TODO until now I have left the Int for power values, assuming that if a user has a fast-charging car he can be shown also suggestions related to
-// slow-charging sockets. Can the model be left as it is?
 
-// TODO move secondsLeft in ChargingSocket and away from Car and rename Schedule entity
+// TODO move secondsLeft in ChargingSocket and away from Vehicle
 
 --------------------------------------------------------------------------SIGNATURES----------------------------------------------------------------------------
 
@@ -10,11 +8,11 @@ sig UserId{}
 
 sig User  {
 	id: disj one UserId,
-	car: one Car,
+	vehicle: one Vehicle, // For simplicity, in the Alloy model the User isn't allowed to register more than one vehicle
 	schedule: set Appointment
 }
 
-sig Car {
+sig Vehicle {
 	batteryState: one BatteryState,
 	absorbedPower: one Int,
 	chargeSecondsLeft: one Int
@@ -59,7 +57,7 @@ sig DISCOUNT extends EnergyPrice {}
 -- Every station contains a set of ChargingSocketsGroup, which, as the name itself says, represent a set of sockets of the same
 --  ChargingSocketType (i.e. fast/rapid/slow charging mode). Every group is associated to his current EnergyPrice, which of course does
 -- not depend on the specific socket within the group.
--- Finally, every ChargingSocket can have - or not - an attached Car, which of course has to be in charging state
+-- Finally, every ChargingSocket can have - or not - an attached Vehicle, which of course has to be in charging state
 sig ChargingStation {
 	location: one Location,
 	chargingSocketsGroups: some ChargingSocketsGroup
@@ -75,7 +73,7 @@ sig ChargingSocketsGroup {
 
 sig ChargingSocket {
 	type: one ChargingSocketType,
-	attachedCar: lone Car
+	attachedVehicle: lone Vehicle
 }
 
 abstract sig ChargingSocketType {
@@ -109,16 +107,16 @@ fact erogatedPowerConstraint {
 	FAST.maxErogatedPower > RAPID.maxErogatedPower and RAPID.maxErogatedPower > SLOW.maxErogatedPower
 }
 
-fact onlyChargingCarsAbsorbePower {
-	// Only the cars that are actually charging can absorbe power
-	all car: Car | (car.absorbedPower = 0) iff not (car.batteryState = CHARGING)
+fact onlyChargingVehiclesAbsorbePower {
+	// Only the vehicles that are actually charging can absorbe power
+	all v: Vehicle | (v.absorbedPower = 0) iff not (v.batteryState = CHARGING)
 }
 
 fact maxErogatedPowerSufficient {
-	// The amount of power absorbed by a car cannot exceed the power erogated by the socket it's connected to
+	// The amount of power absorbed by a vehicle cannot exceed the power erogated by the socket it's connected to
 	all group: ChargingSocketsGroup | (all sock: ChargingSocket |
-		(sock in group.sockets) implies (sock.attachedCar.absorbedPower <= sock.type.maxErogatedPower)) and
-		(some sock: ChargingSocket | (sock in group.sockets) implies (sock.attachedCar.absorbedPower = sock.type.maxErogatedPower))
+		(sock in group.sockets) implies (sock.attachedVehicle.absorbedPower <= sock.type.maxErogatedPower)) and
+		(some sock: ChargingSocket | (sock in group.sockets) implies (sock.attachedVehicle.absorbedPower = sock.type.maxErogatedPower))
 }
 
 
@@ -126,12 +124,12 @@ fact maxErogatedPowerSufficient {
 
 fact timeUntilOneGroupSocketIsFreeIsCoherent {
 	// If there's a free socket then the attribute secondsUntilFreed = 0, otherwise "secondsUntilFree" is the minimum
-	// among all "secondsLeft" attributes of the charging cars
+	// among all "secondsLeft" attributes of the charging vehicles
 	all group: ChargingSocketsGroup | (group.secondsUntilFree = 0 iff (
-		some socket: ChargingSocket | (socket in group.sockets and no c: Car | (c = socket.attachedCar) )))
+		some socket: ChargingSocket | (socket in group.sockets and no v: Vehicle | (v = socket.attachedVehicle) )))
 	and
-	all group: ChargingSocketsGroup, socket: ChargingSocket, car: Car |
-		(socket in group.sockets and car = socket.attachedCar) implies group.secondsUntilFree <= car.chargeSecondsLeft
+	all group: ChargingSocketsGroup, socket: ChargingSocket, v: Vehicle |
+		(socket in group.sockets and v = socket.attachedVehicle) implies group.secondsUntilFree <= v.chargeSecondsLeft
 }
 
 
@@ -147,9 +145,9 @@ fact noSocketWithoutChargingGroup {
 	all sock: ChargingSocket | (one group: ChargingSocketsGroup | sock in group.sockets)
 }
 
-fact noCarWithoutUser {
-	// A Car cannot exist if not associated to a User
-	all c: Car | (one u: User | c = u.car)
+fact noVehicleWithoutUser {
+	// A Vehicle cannot exist if not associated to a User
+	all v: Vehicle | (one u: User | v = u.vehicle)
 }
 
 fact noAppointmentWithoutUser {
@@ -157,9 +155,9 @@ fact noAppointmentWithoutUser {
 	all a: Appointment | (one u: User | a in u.schedule)
 }
 
-fact noBatteryStateWithoutCar {
-	// A BatteryState cannot exist if not associated to a Car
-	all state: BatteryState | (some c: Car | state = c.batteryState)
+fact noBatteryStateWithoutVehicle {
+	// A BatteryState cannot exist if not associated to a Vehicle
+	all state: BatteryState | (some v: Vehicle | state = v.batteryState)
 }
 
 fact noEnergyPriceWithoutGroup {
@@ -194,36 +192,36 @@ fact noEmptyGroups {
 }
 
 
--- Facts related to Car entities
+-- Facts related to Vehicle entities
 
-fact chargingCarHasCorrectType {
-	// If a car is being charged, its BatteryState must be CHARGING or CHARGED - it could happen that the recharge
-	// is finished but the car is still attached
-	all socket: ChargingSocket | (socket.attachedCar != none implies socket.attachedCar.batteryState = CHARGING)
+fact chargingVehicleHasCorrectType {
+	// If a vehicle is being charged, its BatteryState must be CHARGING or CHARGED - it could happen that the recharge
+	// is finished but the vehicle is still attached
+	all socket: ChargingSocket | (socket.attachedVehicle != none implies socket.attachedVehicle.batteryState = CHARGING)
 }
 
-fact onlyChargingCarsHaveSecondsLeft {
-	// If a car is not charging or is fully charged it does not absorbe power from the socket
-	all car: Car | (car.chargeSecondsLeft = 0) iff not (car.batteryState = CHARGING)
+fact onlyChargingVehiclesHaveSecondsLeft {
+	// If a vehicle is not charging or is fully charged it does not absorbe power from the socket
+	all v: Vehicle | (v.chargeSecondsLeft = 0) iff not (v.batteryState = CHARGING)
 }
 
-fact carMustBeChargingOnASocket {
-	// If a car is in charging state it must be connected to a socket
-	all c: Car | c.batteryState = CHARGING implies (
-		one s: ChargingSocket | s.attachedCar = c)
+fact vehicleMustBeChargingOnASocket {
+	// If a vehicle is in charging state it must be connected to a socket
+	all v: Vehicle | v.batteryState = CHARGING implies (
+		one s: ChargingSocket | s.attachedVehicle = v)
 }
 
 
 -- Facts related to ChargingAction entities - i.e. Reservation and Suggestion entities
 
-fact chargingActionPresentOnlyIfCarNeedsCharging {
-	// Every charging action - a Reservation or a Suggestion - is related to a car that needs charging
-	all a: ChargingAction | a.user.car.batteryState = NEEDS_CHARGING
+fact chargingActionPresentOnlyIfVehicleNeedsCharging {
+	// Every charging action - a Reservation or a Suggestion - is related to a vehicle that needs charging
+	all a: ChargingAction | a.user.vehicle.batteryState = NEEDS_CHARGING
 }
 
 fact chargingActionOnlyIfSocketFree {
 	// The Reservation or the Suggestion can be showed only if the proposed ChargingSocket is currently free
-	all a: ChargingAction | (a.socket.attachedCar = none)
+	all a: ChargingAction | (a.socket.attachedVehicle = none)
 }
 
 fact noSuggestionsIfSocketBooked {
@@ -269,22 +267,22 @@ assert correctNumberOfChargingGroups {
 	all s: ChargingStation | #s.chargingSocketsGroups <= #ChargingSocketType
 }
 
-//check correctNumberOfChargingGroups for 5
+check correctNumberOfChargingGroups for 5
 
-assert carIsCharging {
-	// Assert that when a car is in charging state all the related attributes have to be coherent
-	all c: Car | c.batteryState = CHARGING iff (
-		c.chargeSecondsLeft > 0 and c.absorbedPower > 0 and one s: ChargingSocket | (
-			s.attachedCar = c and s.type.maxErogatedPower >= c.absorbedPower))
+assert vehicleIsCharging {
+	// Assert that when a vehicle is in charging state all the related attributes have to be coherent
+	all v: Vehicle | v.batteryState = CHARGING iff (
+		v.chargeSecondsLeft > 0 and v.absorbedPower > 0 and one s: ChargingSocket | (
+			s.attachedVehicle = v and s.type.maxErogatedPower >= v.absorbedPower))
 }
 
-//check carIsCharging for 5
+check vehicleIsCharging for 5
 
-assert grantReservationAndSuggestionsToNonChargingCars {
-	no c: Car | c.batteryState = CHARGING and (some action: ChargingAction | action.user.car = c)
+assert grantReservationAndSuggestionsToNonChargingVehicles {
+	no v: Vehicle | v.batteryState = CHARGING and (some action: ChargingAction | action.user.vehicle = v)
 }
 
-//check grantReservationAndSuggestionsToNonChargingCars for 5
+check grantReservationAndSuggestionsToNonChargingVehicles for 5
 
 assert giveSuggestionsBasedOnPriceOrLocation {
 	// There are no suggestions for a non-discount price in a Location where the user doesn't have an appointment in
@@ -293,23 +291,23 @@ assert giveSuggestionsBasedOnPriceOrLocation {
 			one station: ChargingStation |  group in station.chargingSocketsGroups and station.location = a.location)))
 }
 
-//check giveSuggestionsBasedOnPriceOrLocation for 5
+check giveSuggestionsBasedOnPriceOrLocation for 5
 
 
 -----------------------------------------------------------------------PREDICATES----------------------------------------------------------------------------
 
 -- This generated instance reported in the picture shows a CPO with one station which has two sockets, one with fast charge and the other
--- one with rapid charge. The former is charging Car1, owned by User0. Car0 doesn't need to be attached to a socket because its battery is charged.
--- We can observe that the number of seconds left until the car is charged is equal to the number of seconds until a fast-charging socket is free and
--- that the power absorbed by the car is less than the maximum power available in the socket, as expected
-pred usersAndCarsWorld {
-	#Car >= 2
+-- one with rapid charge. The former is charging Vehicle1, owned by User0. Vehicle0 doesn't need to be attached to a socket because its battery is charged.
+-- We can observe that the number of seconds left until the vehicle is charged is equal to the number of seconds until a fast-charging socket is free and
+-- that the power absorbed by the vehicle is less than the maximum power available in the socket, as expected
+pred usersAndVehiclesWorld {
+	#Vehicle >= 2
 	#CPO = 1
 	#ChargingSocketsGroup >= 2
-	some c: Car | c.batteryState = CHARGING
+	some v: Vehicle | v.batteryState = CHARGING
 }
 
-//run usersAndCarsWorld for 4
+run usersAndVehiclesWorld for 4
 
 -- The instance reported in the picture hides many relations in order to focus only on the aspects described below
 -- All the three suggestions are for the same user. Suggestion2 is based on the entity Appointment associated to the user: in fact,
@@ -327,7 +325,7 @@ pred suggestionsWorld {
 	one s: Suggestion | (one c: ChargingSocketsGroup | c.currentEnergyPrice = STANDARD and s.socket in c.sockets )
 }
 
-//run suggestionsWorld for 4
+run suggestionsWorld for 4
 
 -- The instance is projected over ten sigs, in order to focuse more on the actual interations between the entities
 -- Simulation that shows how prenotations and suggestions can combine together

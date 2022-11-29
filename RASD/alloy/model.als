@@ -1,4 +1,4 @@
-// TODO - ask if it's needed to speciffy DSO entity
+// TODO - ask if it's needed to specify DSO entity
 
 // TODO move secondsLeft in ChargingSocket and away from Vehicle
 
@@ -235,7 +235,7 @@ fact noReservationsIfSocketBooked {
 }
 
 fact noFurtherReservationsForSameUser {
-	// A user can't book a socket in a time interval during which he has another active prenotation
+	// A user can't book a socket in a time interval during which he has another active reservations
 	no disjoint r1, r2: Reservation | (r1.user = r2.user)
 }
 
@@ -246,7 +246,7 @@ fact noDuplicateSuggestions {
 }
 
 fact noSuggestionIfUserHasReservation {
-	// No suggestions are showed to users which already have a prenotation
+	// No suggestions are showed to users which already have a reservations
 	no r: Reservation, s: Suggestion | r.user = s.user
 }
 
@@ -328,13 +328,13 @@ pred suggestionsWorld {
 run suggestionsWorld for 4
 
 -- The instance is projected over ten sigs, in order to focuse more on the actual interations between the entities
--- Simulation that shows how prenotations and suggestions can combine together
--- As expected, the users which have an active prenotation (i.e. User0 and User1) don't receive suggestions, while
--- User2, which has no prenotations. can receive more than one suggestion.
--- There are a prenotation and a suggestion for each charging socket, but the two don't collide - in particular,
--- the prenotations are from timestamp 3 to timestamp 5, while the suggestions are from 1 to 2, therefore compatible
--- with the desidered modelization of the system
-pred prenotationsAndSuggestionsWorld  {
+-- Simulation that shows how reservations and suggestions can combine together
+-- As expected, the users which have an active reservation (i.e. User0 and User1) don't receive suggestions, while
+-- User2, which has no reservations. can receive more than one suggestion.
+-- There are a reservation and a suggestion for each charging socket, but the two don't collide - in particular,
+-- the reservations are from timestamp 3 to timestamp 5, while the suggestions are from 1 to 2, therefore compatible
+-- with the desired modelization of the system
+pred reservationsAndSuggestionsWorld  {
 	#User <= 3
 	#Suggestion > 1
 	#Reservation > 1
@@ -342,4 +342,4 @@ pred prenotationsAndSuggestionsWorld  {
 	all u: User | (some c: ChargingAction | c.user = u)
 }
 
-run prenotationsAndSuggestionsWorld for 4
+run reservationsAndSuggestionsWorld for 4

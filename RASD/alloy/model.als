@@ -49,11 +49,20 @@ sig CPO {
 	stations: set ChargingStation
 }
 
+sig DSO {
+	proposedPrice: one EnergyPrice
+}
+
 abstract sig EnergyPrice {
 	// The declaration of an Int field "price", although natural, is omitted because not relevant for the model
 }
 sig STANDARD extends EnergyPrice {}
 sig DISCOUNT extends EnergyPrice {}
+
+sig EnergyPurchase {
+	cpo: one CPO,
+	dso: one DSO
+}
 
 -- How is the logical structure of a ChargingStation organized?
 -- Every station contains a set of ChargingSocketsGroup, which, as the name itself says, represent a set of sockets of the same
@@ -175,6 +184,11 @@ fact noChargingStationWithoutCPO {
 	all s: ChargingStation | (one cpo: CPO | s  in cpo.stations)
 }
 
+fact noDSOWithoutEnergyPurchase {
+	// A DSO entity cannot exist if not associated to an EnergyPurchase
+	all d: DSO | (one purchase: EnergyPurchase | d = purchase.dso)
+}
+
 // TODO add missing constraints
 
 -- Facts related to ChargingSocketGroups
@@ -265,6 +279,13 @@ fact suggestionIsCoherentWithUserAppointment {
 			group.currentEnergyPrice = DISCOUNT)
 }
 
+fact cpoAlwaysPurchasesEnergyIfDiscounted {
+    // We assume that if there's a DSO that sells energy at discount price there's at least a CPO that
+    // buys it. This fact doesn't necessarily hold in a complex real-world system where the purchase of
+    // energy depends on many different factors, both internal and external to the CPO, but is reasonable
+    // for our simplified model
+    all d: DSO | d.proposedPrice = DISCOUNT implies (some purchase: EnergyPurchase | purchase.dso = d)
+}
 ------------------------------------------------------------------------ASSERTIONS----------------------------------------------------------------------------
 
 assert correctNumberOfChargingGroups {
@@ -333,7 +354,7 @@ pred suggestionsWorld {
 run suggestionsWorld for 4
 
 -- Simulation that shows how reservations and suggestions can combine together
--- The instance is projected over ten sigs and many relations (including all temporal ones), in order to focus
+-- The instance is projected over many sigs and relations (including all temporal ones), in order to focus
 -- more on the actual interactions between the entities
 -- As expected, the users which have an active reservation (i.e. User0 and User1) don't receive suggestions, while
 -- User2, which has no reservations, can receive more than one suggestion.
@@ -347,3 +368,17 @@ pred reservationsAndSuggestionsWorld  {
 }
 
 run reservationsAndSuggestionsWorld for 4
+
+-- This simulation shows how CPOs interact with DSOs to purchase energy. In the shown image,
+-- CPO1 buys energy from DSO0 and DSO1, both offering it with a discounted price, while CPO0 purchases
+-- energy from DSO2 and DSO3 at the standard cost. Notice that the price at which CPOs acquire energy is
+-- not necessarily related to the price at which they sell it, as expected
+
+pred cposAndDsosWorld {
+    #CPO >= 2
+    #DSO >= 3
+    #EnergyPrice = 2
+    some e: EnergyPrice | e = DISCOUNT
+}
+
+run cposAndDsosWorld for 4

@@ -1,0 +1,19 @@
+materialdesignicons f084 e-Mall CPMS #lightgreen
+materialdesignicons f5f1 Charging Station #brown
+
+activate e-Mall CPMS
+loop All stations with batteries
+e-Mall CPMS->Charging Station:1 - Asks battery status
+activate Charging Station
+Charging Station-->e-Mall CPMS: 1.1 - Battery status
+deactivate Charging Station
+end
+e-Mall CPMS->e-Mall CPMS: Decides which batteries to recharge
+loop All stations with batteries
+opt Battery has to be recharged
+e-Mall CPMS->Charging Station: 2 - Recharge battery
+activate Charging Station
+Charging Station-->e-Mall CPMS: 2.1 - Acknowledgement
+deactivate Charging Station
+end
+end

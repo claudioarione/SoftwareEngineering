@@ -1,0 +1,19 @@
+actor User
+materialdesignicons f084 e-Mall #lightgreen
+materialdesignicons f19b Payment Agent #lightblue
+
+activate User
+User->e-Mall:1 - Chooses date, time and aproximate place
+activate e-Mall
+e-Mall-->User:1.1 - Available stations
+User->e-Mall:2 - Selects station and confirms
+e-Mall-->User:2.1 - Temporary confirmation
+e-Mall->Payment Agent:2.2 - Attempts to withdraw half of owed amount
+activate Payment Agent
+alt Insufficient funds exception
+e-Mall<--Payment Agent:2.2.1 - Insufficient funds
+User<--e-Mall:2.3 - Insufficient funds notification
+else Sufficient funds
+e-Mall<--Payment Agent:2.2.2 - Withdrawal successful
+User<--e-Mall:2.4 - Definitive confirmation 
+end

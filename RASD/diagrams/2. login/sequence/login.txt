@@ -1,0 +1,13 @@
+actor User
+materialdesignicons f084 e-Mall #lightgreen
+activate User
+User->User: 1 - Insert login Data
+User->e-Mall:2 - Click on LOGIN button
+activate e-Mall
+alt Wrong credentials exception
+e-Mall-->User:2.1.1 - Wrong credentials
+else Credentials OK
+e-Mall-->User:2.1.2 - Login successful
+end
+activate User
+deactivate User

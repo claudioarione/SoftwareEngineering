@@ -1,0 +1,17 @@
+actor User
+materialdesignicons f084 e-Mall #lightgreen
+database Database #lightblue
+
+activate User
+User->User:1 - Clicks "Add vehicle"
+User->e-Mall:2 - Insert required data
+activate e-Mall
+User<--e-Mall: 2.1 - Confirmation
+e-Mall->Database: 3 - Update
+deactivate User
+activate Database
+alt It is the first saved
+e-Mall<-e-Mall:4.1 - Set as default
+else It is not the first
+deactivate Database
+end

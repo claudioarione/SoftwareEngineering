@@ -1,0 +1,32 @@
+materialdesignicons f084 e-Mall #lightgreen
+actor User
+materialdesignicons f084 Other CPMS #orange
+
+entryspacing 0.8
+activate e-Mall
+e-Mall->User: 1.1 - Fetch Schedule
+activate User
+e-Mall->Other CPMS: 1.2 - Ask for prices
+activate Other CPMS
+User-->e-Mall: 1.1.1 - Schedule
+deactivate User
+Other CPMS-->e-Mall: 1.2.1 - Prices
+deactivate Other CPMS
+e-Mall->e-Mall: 2 - Search for discounted prices
+e-Mall->e-Mall: 3 - Search for compatibility in User schedule
+alt Discount Found
+e-Mall->User: 4 - Suggestion based on discount
+activate User
+else Compatibility Found
+e-Mall->User: 5 - Sugegstion based on schedule
+alt Suggestion accepted
+User-->e-Mall:5.1.1 - Accept suggestion
+e-Mall->e-Mall:5.1.2 - Create reservation
+e-Mall->User:5.1.3 - Reservation completed
+else Suggestion dismissed
+User-->e-Mall: 5.2 - Dismiss suggestion
+end
+else Nothing Found
+deactivate e-Mall
+end
+deactivate User

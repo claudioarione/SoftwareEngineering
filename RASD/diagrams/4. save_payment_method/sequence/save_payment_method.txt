@@ -1,0 +1,43 @@
+actor User
+fontawesome f1ed PayPal #1da1f2
+materialdesignicons f19b Credit Card Agent #lightblue
+materialdesignicons f084 e-Mall #lightgreen
+database Database #lightblue
+
+entryspacing 0.8
+activate User
+User->User:1 - Clicks "Add payment method"
+User->User:2 - Select payment type
+activate User
+alt PayPal selected
+User->PayPal:3.1 - Insert login data
+activate PayPal
+alt Correct credentials
+User<--PayPal:3.1.1 - Login successful
+else Incorrect credentials
+User<--PayPal:3.1.2 - Wrong credentials
+deactivate User
+end
+deactivate PayPal
+activate User
+else Credit Card selected
+User->Credit Card Agent:3.2 - Insert CC data
+activate Credit Card Agent
+alt Correct data
+User<--Credit Card Agent:3.2.1 - CC authorized
+else Incorrect data
+User<--Credit Card Agent:3.2.2 - Incorrect data
+deactivate User
+end
+end
+deactivate Credit Card Agent
+User->e-Mall:4 - Send payment data
+activate e-Mall
+e-Mall-->User: 4.1 - Confirmation
+deactivate User
+alt It is the first method saved
+e-Mall->e-Mall:5.1 - Set as default
+else It is not the first saved
+end
+e-Mall->Database: 6 - Update
+activate Database

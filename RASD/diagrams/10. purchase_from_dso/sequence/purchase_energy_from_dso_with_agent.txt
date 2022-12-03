@@ -1,0 +1,32 @@
+materialdesignicons f5d2 e-Mall Agent
+materialdesignicons f084 e-Mall CPMS #lightgreen
+fontawesome f0e7 DSO #orange
+
+
+activate e-Mall Agent
+e-Mall Agent->e-Mall CPMS:1 - Contact DSOs
+entryspacing 0.8
+activate e-Mall CPMS
+loop For all DSOs available to contact
+e-Mall CPMS->DSO: 1.1 - Ask price of energy
+activate DSO
+e-Mall CPMS<--DSO: 1.1.1 - Energy price solutions
+deactivate DSO
+end
+e-Mall CPMS-->e-Mall Agent: 1.2 - List of energy price solutions
+e-Mall Agent->e-Mall Agent: Evaluate offers
+e-Mall Agent->e-Mall CPMS: 2 - Communicates decision
+e-Mall CPMS-->e-Mall Agent:2.1 - Acknowledgement
+deactivate e-Mall Agent
+loop For all DSOs which sent energy solutions
+alt Selected from e-Mall
+e-Mall CPMS->DSO: 3.1.1 - Accept offer
+activate DSO
+DSO-->e-Mall CPMS: 3.1.2 - Confirmation
+DSO->e-Mall CPMS: 3.1.3 - Provide energy
+else Not selected
+e-Mall CPMS->DSO: 3.2 - Refuse offer
+activate DSO
+end
+deactivate DSO
+end

@@ -1,0 +1,19 @@
+actor User
+materialdesignicons f084 e-Mall #lightgreen
+materialdesignicons f19b Payment Agent #lightblue
+
+activate User
+User->e-Mall:1 - Chooses reservation to cancel
+activate e-Mall
+e-Mall-->User:1.1 - Confirmation
+deactivate User
+opt Cancellation within two hours from start
+e-Mall->Payment Agent:1.2 - Withdraws owed amount
+activate Payment Agent
+alt Insufficient funds exception
+e-Mall<--Payment Agent:1.2.1 - Insufficient funds
+else Sufficient funds
+e-Mall<--Payment Agent:1.2.2 - Withdrawal successful
+deactivate Payment Agent
+end
+end

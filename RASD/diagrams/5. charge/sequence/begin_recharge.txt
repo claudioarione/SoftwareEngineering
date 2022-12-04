@@ -1,0 +1,19 @@
+materialdesignicons f10c Charging Socket #orange
+actor User
+materialdesignicons f084 e-Mall #lightgreen
+materialdesignicons f084 Other CPMS #grey
+
+activate User
+User->e-Mall:1 - Selects charging station, socket ID and recharge end
+activate e-Mall
+opt Stations belongs to another CPMS
+e-Mall->Other CPMS:1.1 - Asks availability of the socket
+Other CPMS-->e-Mall:1.1.1 - Confirmation
+Other CPMS-->Charging Socket:1.1.2 - Unlock
+activate Charging Socket
+deactivate Charging Socket
+end
+User<--e-Mall: 1.2 - Confirmation
+Charging Socket<--e-Mall: 1.2 - Unlock
+activate Charging Socket
+Charging Socket<-User: 2 - Plugs car

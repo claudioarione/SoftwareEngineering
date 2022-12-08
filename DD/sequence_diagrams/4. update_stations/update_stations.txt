@@ -1,0 +1,24 @@
+participant CPMS
+participant ChargingStationsHandler
+participant eMallStationsHandler
+database StationsDB
+
+activate ChargingStationsHandler
+ChargingStationsHandler->eMallStationsHandler:1 - askSocketsAvailabilities()
+activate eMallStationsHandler
+eMallStationsHandler-->ChargingStationsHandler:1.1 - response
+deactivate eMallStationsHandler
+space -2
+loop All available CPMSs
+space -2
+ChargingStationsHandler->CPMS:2 - askSocketsAvailabilities()
+activate CPMS
+CPMS-->ChargingStationsHandler:2.1 - response
+deactivate CPMS
+end
+ChargingStationsHandler->StationsDB:3 - updateSocketsAvailabilities()
+activate StationsDB
+StationsDB-->ChargingStationsHandler:3.1 - OK
+deactivate StationsDB
+space 
+deactivate ChargingStationsHandler

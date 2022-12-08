@@ -1,0 +1,23 @@
+actor User
+participant ClientApp
+participant RegistrationService
+database UsersDB
+
+User->ClientApp:1 - register(data)
+activate ClientApp
+ClientApp->RegistrationService:1.1 - register(data)
+activate RegistrationService
+RegistrationService->RegistrationService:1.1.1 - validateUserData(data)
+alt ValidData
+RegistrationService->UsersDB:1.1.2 - saveUserData(data)
+activate UsersDB
+UsersDB-->RegistrationService:1.1.2.1 - OK
+deactivate UsersDB
+RegistrationService-->ClientApp:1.1.2 - OK
+ClientApp-->User:1.2 - OK
+else InvalidData
+RegistrationService-->ClientApp:1.1.3 - KO
+deactivate RegistrationService
+ClientApp-->User: 1.3 - KO
+deactivate ClientApp
+end

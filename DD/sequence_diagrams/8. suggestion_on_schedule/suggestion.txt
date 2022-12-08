@@ -1,0 +1,27 @@
+participant ClientApp
+participant PersonalInfoService
+participant SuggestionsService
+participant SuggestionsProvider
+database SuggestionsDB
+
+activate ClientApp
+ClientApp->PersonalInfoService:1 - addAppointment(data)
+activate PersonalInfoService
+parallel 
+PersonalInfoService->SuggestionsService:1.1 - onAppointmentAdded(data)
+deactivate PersonalInfoService
+PersonalInfoService-->ClientApp:1.2 - OK
+parallel off
+deactivate ClientApp
+activate SuggestionsService
+SuggestionsService->SuggestionsProvider:1.1.1 - computeSuggestions(data)
+deactivate SuggestionsService
+activate SuggestionsProvider
+SuggestionsProvider->SuggestionsProvider:1.1.1.1 - checkForPossibilities()
+opt Possibility to add a suggestion
+SuggestionsProvider->SuggestionsDB:1.1.1.2 - addSuggestions(data)
+activate SuggestionsDB
+SuggestionsDB-->SuggestionsProvider: OK
+deactivate SuggestionsDB
+end
+deactivate SuggestionsProvider

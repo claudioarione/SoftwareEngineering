@@ -1,0 +1,23 @@
+actor User
+participant ClientApp
+participant AuthorizationService
+database UsersDB
+
+User->ClientApp:1 - login(email, pwd)
+activate ClientApp
+ClientApp->AuthorizationService:1.1 - login(email, pwd)
+activate AuthorizationService
+AuthorizationService->UsersDB:1.1.1 - checkCredentials(email, pwd)
+activate UsersDB
+alt CorrectCredentials
+UsersDB-->AuthorizationService: 1.1.1.1 - User
+AuthorizationService-->ClientApp:1.1.2 - User
+ClientApp-->User:1.2 - User
+else WrongCredentials
+UsersDB-->AuthorizationService: 1.1.1.2 - KO
+deactivate UsersDB
+AuthorizationService-->ClientApp:1.1.3 - KO
+deactivate AuthorizationService
+ClientApp-->User:1.3 - KO
+deactivate ClientApp
+end

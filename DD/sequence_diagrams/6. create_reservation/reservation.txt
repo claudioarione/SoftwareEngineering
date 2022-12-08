@@ -1,0 +1,30 @@
+participant ClientApp
+participant ReservationsService
+participant ChargingStationsHandler
+database StationsDB
+
+activate ClientApp
+ClientApp->ReservationsService:1 - addReservation(data)
+activate ReservationsService
+ReservationsService->ReservationsService:1.1 - validateReservation(data)
+alt ValidData
+ReservationsService->ChargingStationsHandler:1.2 - updateSocketStatus(data)
+activate ChargingStationsHandler
+ChargingStationsHandler->StationsDB:1.1.1 - addReservationForSocket(data)
+activate StationsDB
+alt Socket free on selected timeslot
+StationsDB-->ChargingStationsHandler:1.1.1.1 - OK
+ChargingStationsHandler-->ReservationsService:1.1.2 - OK
+ReservationsService-->ClientApp:1.3 - 200 OK
+else Socket not free
+StationsDB-->ChargingStationsHandler:1.1.1.2 - KO
+deactivate StationsDB
+ChargingStationsHandler-->ReservationsService:1.1.3 - KO
+deactivate ChargingStationsHandler
+ReservationsService-->ClientApp:1.4 - Socket unavailable
+end
+else InvalidData
+ReservationsService-->ClientApp:1.5 - 400 Bad request
+deactivate ReservationsService
+deactivate ClientApp
+end

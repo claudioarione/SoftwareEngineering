@@ -1,0 +1,22 @@
+participant ClientApp
+participant RequestedService
+participant AuthorizationService
+
+activate ClientApp
+ClientApp->RequestedService:1 - request(token, data)
+activate RequestedService
+RequestedService->AuthorizationService:1.1 - validateToken(token)
+activate AuthorizationService
+AuthorizationService->AuthorizationService:1.1.1 - checkTokenValidity(token)
+alt TokenValid
+AuthorizationService-->RequestedService:1.1.2 - UserID, Permissions
+RequestedService->RequestedService:1.2 - request(userId, permissions, data)
+RequestedService-->ClientApp:1.3 - 200 Response
+else InvalidToken
+AuthorizationService-->RequestedService:1.1.3 - Invalid
+deactivate AuthorizationService
+RequestedService-->ClientApp:1.4 - 403 Unauthorized
+deactivate RequestedService
+space 
+deactivate ClientApp
+end

@@ -1,0 +1,23 @@
+participant ChargingStationsHandler
+participant DSO1
+participant DSO2
+
+activate ChargingStationsHandler
+
+ChargingStationsHandler->ChargingStationsHandler:1. checkEnergyNeeds()
+opt EnergyNeeded
+ChargingStationsHandler->DSO1:2. askForEnergy()
+activate DSO1
+ChargingStationsHandler->(5)DSO2:3. askForEnergy()
+activate DSO2
+space -4
+DSO1-->ChargingStationsHandler:2.1 - price, availability
+deactivate DSO1
+DSO2-->(3)ChargingStationsHandler:3.1 - price, availability
+deactivate DSO2
+ChargingStationsHandler->ChargingStationsHandler:4 - checkBestOption()
+ChargingStationsHandler->DSO1:5 - purchaseEnergy(amount)
+activate DSO1
+DSO1-->ChargingStationsHandler:5.1 - OK
+deactivate DSO1
+end

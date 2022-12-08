@@ -1,0 +1,29 @@
+participant ClientApp
+participant ChargingStationsService
+participant ChargingStationsHandler
+database StationsDB
+
+activate ClientApp
+ClientApp->ChargingStationsService:1 - startCharge(data)
+activate ChargingStationsService
+ChargingStationsService->ChargingStationsHandler:1.1 - updateSocketStatus(data)
+activate ChargingStationsHandler
+alt socket.owner = eMall
+create eMallStationsHandler
+ChargingStationsHandler->eMallStationsHandler:1.1.1 - updateStatus(data)
+activate eMallStationsHandler
+eMallStationsHandler->StationsDB:1.1.1.1 - updateSocket(data)
+activate StationsDB
+StationsDB-->eMallStationsHandler:1.1.1.1.1 - OK
+eMallStationsHandler-->ChargingStationsHandler:1.1.1.2 - OK
+deactivate eMallStationsHandler
+destroy eMallStationsHandler
+else socket.owner != eMall
+ChargingStationsHandler->StationsDB:1.1.2 - updateStatus(data)
+StationsDB-->ChargingStationsHandler:1.1.1.1.2 - OK
+deactivate StationsDB 
+end 
+ChargingStationsHandler-->ChargingStationsService:1.1.3 - OK
+deactivate ChargingStationsHandler
+ChargingStationsService-->ClientApp:1.2 - 200 OK
+deactivate ChargingStationsService

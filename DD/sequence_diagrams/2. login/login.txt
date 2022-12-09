@@ -10,9 +10,9 @@ activate AuthorizationService
 AuthorizationService->UsersDB:1.1.1 - checkCredentials(email, pwd)
 activate UsersDB
 alt CorrectCredentials
-UsersDB-->AuthorizationService: 1.1.1.1 - User
-AuthorizationService-->ClientApp:1.1.2 - User
-ClientApp-->User:1.2 - User
+UsersDB-->AuthorizationService: 1.1.1.1 - token
+AuthorizationService-->ClientApp:1.1.2 - token
+ClientApp-->User:1.2 - token
 else WrongCredentials
 UsersDB-->AuthorizationService: 1.1.1.2 - KO
 deactivate UsersDB

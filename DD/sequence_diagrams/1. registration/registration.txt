@@ -9,14 +9,24 @@ ClientApp->RegistrationService:1.1 - register(data)
 activate RegistrationService
 RegistrationService->RegistrationService:1.1.1 - validateUserData(data)
 alt ValidData
-RegistrationService->UsersDB:1.1.2 - saveUserData(data)
-activate UsersDB
+RegistrationService->UsersDB:1.1.2 - saveTmpUserData(data)
 UsersDB-->RegistrationService:1.1.2.1 - OK
+parallel
+RegistrationService->RegistrationService:1.1.3 sendLinkToEmail()
+RegistrationService-->ClientApp:1.1.4 - OK
+parallel off
+ClientApp-->User:1.2 - OK, click link
+space
+User->ClientApp:2 - onLinkClicked()
+ClientApp->RegistrationService:2.1 - onLinkClicked()
+RegistrationService->UsersDB:2.1.1 - saveUserData(data)
+activate UsersDB
+UsersDB-->RegistrationService:2.1.1.1 - OK
 deactivate UsersDB
-RegistrationService-->ClientApp:1.1.2 - OK
-ClientApp-->User:1.2 - OK
+RegistrationService-->ClientApp:2.1.2 - OK
+ClientApp-->User:2.2 - OK
 else InvalidData
-RegistrationService-->ClientApp:1.1.3 - KO
+RegistrationService-->ClientApp:1.1.4 - KO
 deactivate RegistrationService
 ClientApp-->User: 1.3 - KO
 deactivate ClientApp

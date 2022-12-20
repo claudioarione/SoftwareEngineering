@@ -7,7 +7,7 @@ This is the repository for the **Software Engineering II** course held at Polite
 ### Project Specification
 The project consists in writing the Requirements And Specifications Document (RASD) and the Design Document (DD) regarding eMall, a system which helps the user to manage their electric vehicles related to charging and scheduling charging sessions.
 
-You can find the full assignment [here](https://github.com/claudioarione/ArioneBindiBegliomini/Assignment_RDD_AY_2022-2023_v3).
+You can find the full assignment [here](https://github.com/claudioarione/ArioneBindiBegliomini/blob/main/Assignment_RDD_AY_2022-2023_v3.pdf).
 
 ### The Team
 - [Claudio Arione](https://github.com/claudioarione)
@@ -27,5 +27,5 @@ You can find the full assignment [here](https://github.com/claudioarione/ArioneB
 ### Final Documents
 Functionality  | Status
 ------------- | -------------
-RASD  | <center>:white_check_mark:</center>
-DD  | <center>:white_check_mark:</center>
+RASD  | [:white_check_mark:](https://github.com/claudioarione/ArioneBindiBegliomini/tree/main/RASD)
+DD  | [:white_check_mark:](https://github.com/claudioarione/ArioneBindiBegliomini/tree/main/DD)

@@ -3826,13 +3826,30 @@
 											"height": 13,
 											"text": "+updateSocketStatus(socketId: String, actionType: ActionType, ...)",
 											"horizontalAlignment": 0
+										},
+										{
+											"_type": "UMLOperationView",
+											"_id": "AAAAAAGFMBKpSmyiFrA=",
+											"_parent": {
+												"$ref": "AAAAAAGE6GuMIFfgUmw="
+											},
+											"model": {
+												"$ref": "AAAAAAGFMBKpLWyf9+w="
+											},
+											"font": "Arial;13;0",
+											"left": 2613,
+											"top": 2364,
+											"width": 381.900390625,
+											"height": 13,
+											"text": "+getNearbyStation(position: Place)",
+											"horizontalAlignment": 0
 										}
 									],
 									"font": "Arial;13;0",
 									"left": 2608,
 									"top": 2329,
 									"width": 391.900390625,
-									"height": 38
+									"height": 53
 								},
 								{
 									"_type": "UMLReceptionCompartmentView",
@@ -10808,6 +10825,25 @@
 									},
 									"name": "...",
 									"type": ""
+								}
+							]
+						},
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAGFMBKpLWyf9+w=",
+							"_parent": {
+								"$ref": "AAAAAAGE6GuMH1fXxkM="
+							},
+							"name": "getNearbyStation",
+							"parameters": [
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGFMBLiyGymjBo=",
+									"_parent": {
+										"$ref": "AAAAAAGFMBKpLWyf9+w="
+									},
+									"name": "position",
+									"type": "Place"
 								}
 							]
 						}
